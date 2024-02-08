@@ -474,7 +474,26 @@ namespace Antmicro.Renode.Peripherals.CPU
                     return;
                 }
                 messageBuilder.Clear();
-                this.Log(LogLevel.Info, messageBuilder.Append("Entering function ").Append(name ?? "without name").Append(" at 0x").Append(pc.ToString("X")).ToString());
+                messageBuilder.Append("Entering function ").Append(name ?? "without name");
+                if(Disassembler == null)
+                {
+                    messageBuilder.Append(" @: 0x").Append(pc.ToString("X"));
+                }
+                else
+                {
+                    var phy = TranslateAddress(pc, MpuAccess.InstructionFetch);
+                    var tab = Bus.ReadBytes(phy, 4, true, context: this);
+                    Disassembler.DisassembleBlock(pc, tab, 0x0, out var disas);
+                    if(disas != null)
+                    {
+                        messageBuilder.Append(" ").Append(disas.Trim());
+                    }
+                    else
+                    {
+                        messageBuilder.Append(" @:: 0x").Append(pc.ToString("X"));
+                    }
+                }
+                this.Log(LogLevel.Info, messageBuilder.ToString());
             });
         }
 
